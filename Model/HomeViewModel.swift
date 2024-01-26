@@ -9,6 +9,10 @@ class HomeViewModel: ObservableObject {
     
     @Published var totalRefreshesToday: String = "10"
     @Published var totalRefreshesAllTime: String = "10,382"
+    @Published var lastRefreshTimeAgo: String = "1 Min ago"
+    
+    var lastRefreshTime: Date = Date()
+    
     
     var priceColor: Color {
         guard let price = Double(bitcoinPrice.replacingOccurrences(of: ",", with: "")) else {

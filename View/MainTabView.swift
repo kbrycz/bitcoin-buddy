@@ -25,11 +25,6 @@ struct MainTabView: View {
                     Label("Learn", systemImage: "2.circle")
                 }
 
-            BullishView()
-                .tabItem {
-                    Label("Bull", systemImage: "3.circle")
-                }
-
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "4.circle")

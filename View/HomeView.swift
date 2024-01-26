@@ -43,6 +43,10 @@ struct HomeView: View {
                     .frame(height: 40) // This creates a vertical spacer of 20 points in height
                 
                 // Custom Bordered Box View
+                BorderedBoxView(title: "Last Refresh", value: viewModel.lastRefreshTimeAgo)
+                    .padding([.leading, .trailing])
+                
+                // Custom Bordered Box View
                 BorderedBoxView(title: "Today's Refreshes", value: viewModel.totalRefreshesToday)
                     .padding([.leading, .trailing])
             
