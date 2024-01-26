@@ -1,46 +1,90 @@
 import SwiftUI
+import Combine
 
 class HomeViewModel: ObservableObject {
-    @Published var todaysDate: String = "April 5, 2020"
-    @Published var bitcoinPrice: String = "50,000.00"
-    @Published var prevBitcoinPrice: String = "50,000.00"
-    @Published var changeInPrice: String = "100.00"
+    @Published var todaysDate: String = ""
+
+    @Published var bitcoinPrice: String = "0.00"
+    @Published var prevBitcoinPrice: String = "0.00"
+    @Published var changeInPrice: String = "0"
     @Published var changeInPriceSignal: String = "+"
+    
+    var bitcoinPriceNumber : Int = 0
+    var prevBitcoinPriceNumber : Int = 0
+    var changeInPriceNumber : Int = 0
     
     @Published var totalRefreshesToday: String = "10"
     @Published var totalRefreshesAllTime: String = "10,382"
     @Published var lastRefreshTimeAgo: String = "1 Min ago"
     
+    @Published var errorMessage: String? = nil
+    
     var lastRefreshTime: Date = Date()
     
     
     var priceColor: Color {
-        guard let price = Double(bitcoinPrice.replacingOccurrences(of: ",", with: "")) else {
-            return Color.white // Default color if the price is not a valid number
+        if changeInPriceNumber == 0 {
+            return Color.white
         }
-        return price > 49000 ? Color.green : Color.red
+        return changeInPriceNumber > 0 ? Color.green : Color.red
+    }
+    
+    func loadEverything() {
+        getTodaysDate()
+        getBitcoinPrice(false)
     }
 
     func refreshData() {
-        getBitcoinPrice()
         getTodaysDate()
+        getBitcoinPrice(true)
     }
+
     
-    func getBitcoinPrice() {
-        // Simulating a change in the bitcoin price for demonstration
-        // In a real scenario, you would fetch and update this value from a data source
-        let newPrice = Double.random(in: 10000...200000)
+    func getBitcoinPrice(_ isRefresh: Bool) {
+        let url = URL(string: "https://api.blockchain.com/v3/exchange/tickers/BTC-USD")!
 
-        // Format the new price as a currency value
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencySymbol = "" // Remove the currency symbol if you don't want it
-        formatter.maximumFractionDigits = 2 // Maximum number of decimal places
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self.errorMessage = "Error: \(error.localizedDescription)"
+                    return
+                }
+                guard let data = data else {
+                    self.errorMessage = "Error: Data is missing"
+                    return
+                }
 
-        if let formattedPrice = formatter.string(from: NSNumber(value: newPrice)) {
-            bitcoinPrice = formattedPrice
-        }
+                do {
+                    let json = try JSONDecoder().decode(BitcoinAPIResponse.self, from: data)
+                    let newPrice = json.last_trade_price
+                    
+                    if isRefresh && self.bitcoinPriceNumber > 0 {
+                        self.prevBitcoinPrice = self.bitcoinPrice
+                        self.prevBitcoinPriceNumber = self.bitcoinPriceNumber
+                    }
+
+                    self.bitcoinPrice = String(format: "%.2f", newPrice)
+                    self.bitcoinPriceNumber = Int(newPrice)
+                    
+                    // Update bitcoinPrice with formatted string
+                   let formattedPrice = self.formatAsCurrency(newPrice)
+                   self.bitcoinPrice = formattedPrice
+
+                    // Calculate change in price
+                    if isRefresh {
+                        self.changeInPriceNumber = self.bitcoinPriceNumber - self.prevBitcoinPriceNumber
+                        self.changeInPrice = String(self.changeInPriceNumber)
+                        self.changeInPriceSignal = self.changeInPriceNumber >= 0 ? "+" : "-"
+                    }
+                    
+                    self.errorMessage = nil
+                } catch {
+                    self.errorMessage = "Error: \(error.localizedDescription)"
+                }
+            }
+        }.resume()
     }
+
     
     func getTodaysDate() {
         let currentDate = Date()
@@ -48,6 +92,21 @@ class HomeViewModel: ObservableObject {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM d, yyyy" // Format: April 5, 2020
         todaysDate = formatter.string(from: currentDate)
+    }
+    
+    private func formatAsCurrency(_ number: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = Locale(identifier: "en_US") // You can adjust the locale to your preference
+        formatter.currencySymbol = "" // Remove the currency symbol
+        formatter.maximumFractionDigits = 2 // Set the maximum number of decimal places
+
+        return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
+    }
+
+    
+    struct BitcoinAPIResponse: Decodable {
+        let last_trade_price: Double
     }
 }
 

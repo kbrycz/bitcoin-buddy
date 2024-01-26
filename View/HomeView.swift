@@ -25,19 +25,22 @@ struct HomeView: View {
                         .font(.system(size: 50, design: .rounded))
                         .minimumScaleFactor(0.1) // Allows the text to shrink
                         .foregroundColor(viewModel.priceColor)
+                        
                 }
                 .scaledToFit()
                 
-                HStack {
-                    Text(viewModel.changeInPriceSignal)
-                        .font(.system(size: 15)) // Adjust size as needed
-                        .foregroundColor(viewModel.priceColor)
-                    Text(viewModel.changeInPrice)
-                        .font(.system(size: 20, design: .rounded))
-                        .minimumScaleFactor(0.1) // Allows the text to shrink
-                        .foregroundColor(viewModel.priceColor)
+                if (viewModel.changeInPriceNumber != 0) {
+                    HStack {
+                        Text(viewModel.changeInPriceSignal)
+                            .font(.system(size: 15)) // Adjust size as needed
+                            .foregroundColor(viewModel.priceColor)
+                        Text(viewModel.changeInPrice)
+                            .font(.system(size: 20, design: .rounded))
+                            .minimumScaleFactor(0.1) // Allows the text to shrink
+                            .foregroundColor(viewModel.priceColor)
+                    }
+                    .scaledToFit()
                 }
-                .scaledToFit()
                 
                 Spacer()
                     .frame(height: 40) // This creates a vertical spacer of 20 points in height
@@ -55,6 +58,12 @@ struct HomeView: View {
                 BorderedBoxView(title: "All Time Refreshes", value: viewModel.totalRefreshesAllTime)
                     .padding([.leading, .trailing])
                 
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .padding()
+                }
+                
             }
             .padding() // Add padding around the VStack
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -69,6 +78,9 @@ struct HomeView: View {
         .background(Color.customBackground.edgesIgnoringSafeArea(.all)) // Set background color
         .refreshable {
             viewModel.refreshData()
+        }
+        .onAppear {
+            viewModel.loadEverything()
         }
     }
 }
