@@ -99,7 +99,7 @@ class HomeViewModel: ObservableObject {
                    self.bitcoinPrice = formattedPrice
 
                     self.changeInPriceNumber = Double(self.bitcoinPriceNumber) - Double(self.prevBitcoinPriceNumber)
-                    self.changeInPrice = self.formatAsCurrency(self.changeInPriceNumber, false)
+                    self.changeInPrice = self.formatAsCurrency(abs(self.changeInPriceNumber), false)
                     self.changeInPriceSignal = self.changeInPriceNumber >= 0 ? "+" : "-"
                     print("Updating bitcoin change in price: " + self.changeInPriceSignal + String(self.changeInPrice))
                     

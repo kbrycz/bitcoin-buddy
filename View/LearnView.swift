@@ -6,7 +6,7 @@ struct LearnView: View {
     var body: some View {
         List(viewModel.items, id: \.title) { item in
             HStack {
-                Image("bitcoin") // Placeholder image
+                Image(item.imageName) // Placeholder image
                     .resizable()
                     .scaledToFit()
                     .frame(width: UIScreen.main.bounds.width / 3)
@@ -17,12 +17,9 @@ struct LearnView: View {
 
                 VStack(alignment: .leading) {
                     Text(item.title)
-                        .font(.headline)
+                        .font(.system(size: 14, design: .rounded))
                         .foregroundColor(.white)
-
-                    Text(item.description)
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .opacity(0.7)
                 }
 
                 Spacer()

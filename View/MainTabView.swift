@@ -17,17 +17,17 @@ struct MainTabView: View {
         TabView {
             HomeView(viewModel: HomeViewModel())
                 .tabItem {
-                    Label("Home", systemImage: "1.circle")
+                    Label("Home", systemImage: "house") // 'house' for home icon
                 }
 
             LearnView()
                 .tabItem {
-                    Label("Learn", systemImage: "2.circle")
+                    Label("Learn", systemImage: "graduationcap") // 'graduationcap' for learning/education icon
                 }
 
             SettingsView()
                 .tabItem {
-                    Label("Settings", systemImage: "4.circle")
+                    Label("Settings", systemImage: "gear") // 'gear' for settings/cog icon
                 }
         }
     }

@@ -1,17 +1,26 @@
-//
-//  Bitcoin_BuddyApp.swift
-//  Bitcoin Buddy
-//
-//  Created by Karl Brycz on 1/24/24.
-//
-
 import SwiftUI
 
 @main
 struct Bitcoin_BuddyApp: App {
+    @State private var isShowingSplash = true
+    // Preload MainTabView
+    let mainView = MainTabView()
+
     var body: some Scene {
         WindowGroup {
-            MainTabView()
+            ZStack {
+                // Always present but will be covered by SplashScreenView initially
+                mainView
+                
+                if isShowingSplash {
+                    SplashScreenView()
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                isShowingSplash = false
+                            }
+                        }
+                }
+            }
         }
     }
 }
