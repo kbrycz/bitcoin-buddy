@@ -53,11 +53,16 @@ struct HomeView: View {
                 BorderedBoxView(title: "Today's Refreshes", value: viewModel.totalRefreshesToday)
                     .padding([.leading, .trailing])
             
-                
                 // Custom Bordered Box View
                 BorderedBoxView(title: "All Time Refreshes", value: viewModel.totalRefreshesAllTime)
                     .padding([.leading, .trailing])
                 
+                if viewModel.bitcoinTransactionFee != "" {
+                    // Custom Bordered Box View
+                    BorderedBoxView(title: "Avg Transaction Fee", value: viewModel.bitcoinTransactionFee)
+                        .padding([.leading, .trailing])
+                }
+
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
                         .foregroundColor(.red)

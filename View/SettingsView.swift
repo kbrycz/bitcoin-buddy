@@ -17,6 +17,12 @@ struct SettingsView: View {
                 Toggle("Price Fading Mode", isOn: $viewModel.toggleTwo)
                     .foregroundColor(.white)
                     .toggleStyle(SwitchToggleStyle(tint: .orange))
+                Toggle("Bitcoin Fee", isOn: $viewModel.toggleTwo)
+                    .foregroundColor(.white)
+                    .toggleStyle(SwitchToggleStyle(tint: .orange))
+                Toggle("Lightning Fee", isOn: $viewModel.toggleTwo)
+                    .foregroundColor(.white)
+                    .toggleStyle(SwitchToggleStyle(tint: .orange))
             }
             .padding()
             .background(Color.white.opacity(0.1))
