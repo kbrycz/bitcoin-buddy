@@ -25,12 +25,9 @@ struct PriceView: View {
         }
         .scaledToFit()
         
-        if (viewModel.changeInPriceNumber != 0) {
+        if (viewModel.percentChange24hValue != 0) {
             HStack {
-                Text("asda")
-                    .font(.system(size: 15)) // Adjust size as needed
-                    .foregroundColor(viewModel.priceColor)
-                Text("asdfa")
+                Text(viewModel.percentChange24h)
                     .font(.system(size: 20, design: .rounded))
                     .minimumScaleFactor(0.1) // Allows the text to shrink
                     .foregroundColor(viewModel.priceColor)

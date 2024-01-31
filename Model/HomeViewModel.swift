@@ -8,12 +8,11 @@ class HomeViewModel: ObservableObject {
     @Published var todaysDate: String = ""
     @Published var bitcoinPrice: String = "0.00"
     @Published var percentChange24h: String = "0.00%"
+    @Published var percentChange24hValue: Double = 0;
     @Published var circulatingSupply: String = ""
     @Published var marketCap: String = ""
     
-    var bitcoinPriceNumber : Int = 0
-    var prevBitcoinPriceNumber : Int = 0
-    var changeInPriceNumber : Double = 0
+    var bitcoinPriceNumber : Double = 0
     
     @Published var totalRefreshesToday: String = "0"
     @Published var totalRefreshesAllTime: String = "0"
@@ -51,16 +50,18 @@ class HomeViewModel: ObservableObject {
     }
     
     var priceColor: Color {
-        if changeInPriceNumber == 0 {
+        if self.percentChange24hValue == 0 {
             return Color.white
         }
-        return changeInPriceNumber > 0 ? Color.green : Color.red
+        return percentChange24hValue > 0 ? Color.green : Color.red
     }
     
     func loadEverything() {
         getTodaysDate()
-        getBitcoinPrice(false)
-        getBitcoinTransactionFee()
+        // Call getBitcoinPrice and then getBitcoinTransactionFee sequentially
+        getBitcoinPrice(true) { [weak self] in
+            self?.getBitcoinTransactionFee()
+        }
     }
     
     func check30MinuteToggle() -> Bool {
@@ -92,6 +93,13 @@ class HomeViewModel: ObservableObject {
         if check30MinuteToggle() {
             return
         }
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd" // Same format as used in loadFromUserDefaults
+        let currentDate = formatter.string(from: Date())
+
+        UserDefaults.standard.set(currentDate, forKey: UserDefaultsKeys.lastRefreshDate)
+        UserDefaults.standard.synchronize()
         
         // Trigger haptic feedback
         let feedbackGenerator = UINotificationFeedbackGenerator()
@@ -100,10 +108,12 @@ class HomeViewModel: ObservableObject {
 
         print("Refreshing...")
         getTodaysDate()
-        getBitcoinPrice(true)
+        // Call getBitcoinPrice and then getBitcoinTransactionFee sequentially
+        getBitcoinPrice(true) { [weak self] in
+            self?.getBitcoinTransactionFee()
+        }
         incrementRefreshCount()
         updateLastRefreshTimeAgo()
-        getBitcoinTransactionFee()
         self.lastRefreshTime = Date()
 
         // Reset wait message after successful refresh
@@ -119,7 +129,7 @@ class HomeViewModel: ObservableObject {
         return apiKey
     }
         
-    private func getBitcoinPrice(_ isRefresh: Bool) {
+    private func getBitcoinPrice(_ isRefresh: Bool, completion: @escaping () -> Void) {
         guard let apiKey = getAPIKey() else {
             print("API Key not found")
             return
@@ -147,11 +157,19 @@ class HomeViewModel: ObservableObject {
                         let price = bitcoinData.quote.USD.price
                         let change24h = bitcoinData.quote.USD.percent_change_24h
                         let marketCap = bitcoinData.quote.USD.market_cap
-                        
+                                                
+                        self.bitcoinPriceNumber = price
                         self.circulatingSupply = self.formatNumberWithCommas(bitcoinData.circulating_supply)
                         self.bitcoinPrice = self.formatAsCurrency(price, true)
+                        self.percentChange24hValue = change24h
                         self.percentChange24h = String(format: "%.2f%%", change24h)
                         self.marketCap = self.formatAsCurrency(marketCap, false)
+                        
+                        print("Successfully got bitcoin price: " + self.bitcoinPrice)
+                        print("Successfully got bitcoin percent change: " + self.percentChange24h)
+                        print("Successfully got bitcoin market cap: " + self.marketCap)
+                        
+                        completion()
                     }
                 } catch {
                     self.errorMessage = "Error loading price: \(error.localizedDescription)"
@@ -179,8 +197,10 @@ class HomeViewModel: ObservableObject {
                     let estimates = response.estimates.values.map { $0.total }
                     let averageFeeSatoshi = self.calculateAverageTransactionFee(estimates)
                     let averageFeeUSD = self.convertSatoshiToUSD(averageFeeSatoshi)
-                    self.bitcoinTransactionFee = self.formatAsCurrency(averageFeeUSD, false)
-                    print("Successfully got bitcoin transaction fee: " + self.bitcoinTransactionFee)
+                    if averageFeeUSD > 0.0 {
+                        self.bitcoinTransactionFee = self.formatAsCurrency(averageFeeUSD, false)
+                        print("Successfully got bitcoin transaction fee: " + self.bitcoinTransactionFee)
+                    }
                 } catch {
                     print("Error: \(error.localizedDescription)")
                 }
@@ -188,11 +208,23 @@ class HomeViewModel: ObservableObject {
         }.resume()
     }
 
-    
     private func loadFromUserDefaults() {
-        // Load total refreshes today
-        if let totalToday = UserDefaults.standard.string(forKey: UserDefaultsKeys.totalRefreshesToday) {
-            totalRefreshesToday = totalToday
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd" // Use a format that includes only the date
+
+        let currentDate = formatter.string(from: Date())
+        todaysDate = currentDate
+
+        // Load the date of the last refresh
+        if let lastRefreshDate = UserDefaults.standard.string(forKey: UserDefaultsKeys.lastRefreshDate),
+           let lastRefresh = formatter.date(from: lastRefreshDate) {
+            
+            // Check if last refresh was today
+            if !Calendar.current.isDateInToday(lastRefresh) {
+                // If not today, reset the counter
+                totalRefreshesToday = "0"
+                UserDefaults.standard.set("0", forKey: UserDefaultsKeys.totalRefreshesToday)
+            }
         }
 
         // Load total refreshes all time
@@ -239,7 +271,7 @@ class HomeViewModel: ObservableObject {
 
     private func convertSatoshiToUSD(_ satoshi: Double) -> Double {
         // Assuming bitcoinPriceNumber is the price of 1 Bitcoin in USD
-        let bitcoinPriceUSD = Double(bitcoinPriceNumber)
+        let bitcoinPriceUSD = self.bitcoinPriceNumber
         let satoshiPerBitcoin = 100_000_000.0
         return (satoshi / satoshiPerBitcoin) * bitcoinPriceUSD
     }
@@ -298,6 +330,7 @@ class HomeViewModel: ObservableObject {
         static let totalRefreshesToday = "totalRefreshesToday"
         static let totalRefreshesAllTime = "totalRefreshesAllTime"
         static let lastRefreshTime = "lastRefreshTime"
+        static let lastRefreshDate = "lastRefreshDate" // Add this line
     }
     
     private struct BitcoinFeeResponse: Decodable {
