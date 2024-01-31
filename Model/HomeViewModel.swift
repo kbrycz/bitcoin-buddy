@@ -8,7 +8,8 @@ class HomeViewModel: ObservableObject {
     @Published var todaysDate: String = ""
     @Published var bitcoinPrice: String = "0.00"
     @Published var percentChange24h: String = "0.00%"
-    @Published var circulatingSupply: Double = 0
+    @Published var circulatingSupply: String = ""
+    @Published var marketCap: String = ""
     
     var bitcoinPriceNumber : Int = 0
     var prevBitcoinPriceNumber : Int = 0
@@ -145,10 +146,12 @@ class HomeViewModel: ObservableObject {
                     if let bitcoinData = jsonResponse.data["1"] {
                         let price = bitcoinData.quote.USD.price
                         let change24h = bitcoinData.quote.USD.percent_change_24h
-                        self.circulatingSupply = bitcoinData.circulating_supply
-
+                        let marketCap = bitcoinData.quote.USD.market_cap
+                        
+                        self.circulatingSupply = self.formatNumberWithCommas(bitcoinData.circulating_supply)
                         self.bitcoinPrice = self.formatAsCurrency(price, true)
                         self.percentChange24h = String(format: "%.2f%%", change24h)
+                        self.marketCap = self.formatAsCurrency(marketCap, false)
                     }
                 } catch {
                     self.errorMessage = "Error loading price: \(error.localizedDescription)"
@@ -277,6 +280,13 @@ class HomeViewModel: ObservableObject {
 
         return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
     }
+    
+    private func formatNumberWithCommas(_ number: Double) -> String {
+        let numberFormatter = NumberFormatter()
+        numberFormatter.numberStyle = .decimal // Use decimal style for adding commas
+        numberFormatter.groupingSeparator = "," // Ensure the comma is used as the grouping separator
+        return numberFormatter.string(from: NSNumber(value: number)) ?? "\(number)"
+    }
 
     
     private struct BitcoinAPIResponse: Decodable {
@@ -334,6 +344,7 @@ class HomeViewModel: ObservableObject {
     struct USDQuote: Decodable {
         let price: Double
         let percent_change_24h: Double
+        let market_cap: Double
     }
 
 }

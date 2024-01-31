@@ -25,7 +25,7 @@ struct HomeView: View {
             Image("bitcoin") // Background Bitcoin Image
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .opacity(0.02) // Set transparency
+                .opacity(0.04) // Set transparency
                 .frame(maxWidth: .infinity, maxHeight: .infinity) // Center the image
         )
         .background(Color.customBackground.edgesIgnoringSafeArea(.all)) // Set background color

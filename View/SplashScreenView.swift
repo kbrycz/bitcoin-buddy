@@ -1,29 +1,24 @@
 import SwiftUI
 
 struct SplashScreenView: View {
-    @State private var logoOpacity = 0.0
+    @Binding var logoOpacity: Double
 
     var body: some View {
         VStack {
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .scaleEffect(0.35) // Reduces the logo size to 50%
+                .scaleEffect(0.35)
                 .opacity(logoOpacity)
-                .onAppear {
-                    withAnimation(.easeInOut(duration: 1)) {
-                        logoOpacity = 1.0
-                    }
-                }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.white)
-        .ignoresSafeArea(edges: .all) // Ensures the view covers the entire screen
+        .ignoresSafeArea(edges: .all)
     }
 }
 
 struct SplashScreenView_Previews: PreviewProvider {
     static var previews: some View {
-        SplashScreenView()
+        SplashScreenView(logoOpacity: .constant(1.0))
     }
 }

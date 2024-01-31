@@ -11,6 +11,21 @@ struct DataView: View {
                 .padding([.leading, .trailing])
         }
         
+        if (settingsViewModel.toggleMarketCap) {
+            BorderedBoxView(title: "Market Cap", value: viewModel.marketCap == "" ? "n/a" : viewModel.marketCap)
+                .padding([.leading, .trailing])
+        }
+        
+        if (settingsViewModel.toggleCirculatingSupply) {
+            BorderedBoxView(title: "Circulating Supply", value: viewModel.circulatingSupply == "" ? "n/a" : viewModel.circulatingSupply)
+                .padding([.leading, .trailing])
+        }
+
+        if (settingsViewModel.toggleBitcoinFees) {
+            BorderedBoxView(title: "Avg Transaction Fee", value: viewModel.bitcoinTransactionFee == "$0.00" ? "n/a" : viewModel.bitcoinTransactionFee)
+                .padding([.leading, .trailing])
+        }
+        
         if settingsViewModel.toggleTodayRefreshes {
             BorderedBoxView(title: "Today's Refreshes", value: viewModel.totalRefreshesToday)
                 .padding([.leading, .trailing])
@@ -18,11 +33,6 @@ struct DataView: View {
         
         if settingsViewModel.toggleAllTimeRefreshes {
             BorderedBoxView(title: "All Time Refreshes", value: viewModel.totalRefreshesAllTime)
-                .padding([.leading, .trailing])
-        }
-
-        if (settingsViewModel.toggleBitcoinFees && viewModel.bitcoinTransactionFee != "") {
-            BorderedBoxView(title: "Avg Transaction Fee", value: viewModel.bitcoinTransactionFee)
                 .padding([.leading, .trailing])
         }
 

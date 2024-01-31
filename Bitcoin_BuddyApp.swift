@@ -3,20 +3,22 @@ import SwiftUI
 @main
 struct Bitcoin_BuddyApp: App {
     @State private var isShowingSplash = true
-    // Preload MainTabView
+    @State private var logoOpacity = 1.0 // Start with full opacity
     let mainView = MainTabView()
 
     var body: some Scene {
         WindowGroup {
             ZStack {
-                // Always present but will be covered by SplashScreenView initially
                 mainView
-                
+
                 if isShowingSplash {
-                    SplashScreenView()
+                    SplashScreenView(logoOpacity: $logoOpacity)
                         .onAppear {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                                isShowingSplash = false
+                                withAnimation(.easeInOut(duration: 1)) {
+                                    logoOpacity = 0.0
+                                    isShowingSplash = false
+                                }
                             }
                         }
                 }

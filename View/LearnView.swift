@@ -5,7 +5,21 @@ struct LearnView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 8) {  // Adjusted spacing between elements
+            VStack(spacing: 8) {
+                Text("Learn")
+                    .font(.largeTitle)
+                    .foregroundColor(.white)
+                    .padding(.top, 40)
+                    .opacity(0.7)
+                
+                Text("Check out some of the best resources on macro economics and bitcoin!")
+                    .font(.system(size: 14, design: .rounded))
+                    .foregroundColor(.white)
+                    .opacity(0.5)
+                    .padding(EdgeInsets(top: 10, leading: 20, bottom: 5, trailing: 20))
+                
+                Spacer()
+                
                 ForEach(viewModel.items, id: \.title) { item in
                     HStack {
                         Image(item.imageName)
@@ -30,9 +44,14 @@ struct LearnView: View {
 
                         Spacer()
                     }
-                    .padding(EdgeInsets(top: 5, leading: 3, bottom: 5, trailing: 3))
+                    .padding(EdgeInsets(top: 10, leading: 10, bottom: 5, trailing: 10))
                     .background(Color.white.opacity(0.1))
                 }
+                Text("This is not financial advice! Do your own research!")
+                    .font(.system(size: 12, design: .rounded))
+                    .foregroundColor(.white)
+                    .opacity(0.5)
+                    .padding(EdgeInsets(top: 10, leading: 20, bottom: 5, trailing: 20))
             }
         }
         .background(Color.customBackground.edgesIgnoringSafeArea(.all))
