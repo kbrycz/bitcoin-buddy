@@ -40,7 +40,7 @@ struct HomeView: View {
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        HomeView(viewModel: HomeViewModel())
+        HomeView(viewModel: HomeViewModel(settingsViewModel: SettingsViewModel()))
             .environmentObject(SettingsViewModel()) // Provide SettingsViewModel as an environment object
     }
 }

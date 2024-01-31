@@ -24,6 +24,18 @@ class SettingsViewModel: ObservableObject {
             UserDefaults.standard.set(toggleBitcoinFees, forKey: "toggleBitcoinFees")
         }
     }
+    
+    @Published var toggleCirculatingSupply: Bool = UserDefaults.standard.bool(forKey: "toggleCirculatingSupply") {
+        didSet {
+            UserDefaults.standard.set(toggleCirculatingSupply, forKey: "toggleCirculatingSupply")
+        }
+    }
+    
+    @Published var toggle30Minutes: Bool = UserDefaults.standard.bool(forKey: "toggle30Minutes") {
+        didSet {
+            UserDefaults.standard.set(toggle30Minutes, forKey: "toggle30Minutes")
+        }
+    }
 
     // Initialize with saved values
     init() {
@@ -31,6 +43,10 @@ class SettingsViewModel: ObservableObject {
         toggleTodayRefreshes = UserDefaults.standard.bool(forKey: "toggleTodayRefreshes")
         toggleAllTimeRefreshes = UserDefaults.standard.bool(forKey: "toggleAllTimeRefreshes")
         toggleBitcoinFees = UserDefaults.standard.bool(forKey: "toggleBitcoinFees")
+        toggleCirculatingSupply = UserDefaults.standard.bool(forKey: "toggleCirculatingSupply")
+        toggle30Minutes = UserDefaults.standard.bool(forKey: "toggle30Minutes")
+
+
     }
 
 }

@@ -47,7 +47,7 @@ struct DataView: View {
 
 struct DataView_Previews: PreviewProvider {
     static var previews: some View {
-        DataView(viewModel: HomeViewModel())
+        DataView(viewModel: HomeViewModel(settingsViewModel: SettingsViewModel()))
             .environmentObject(SettingsViewModel()) // Provide SettingsViewModel as an environment object
     }
 }

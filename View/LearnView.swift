@@ -4,33 +4,38 @@ struct LearnView: View {
     @ObservedObject var viewModel = LearnViewModel()
 
     var body: some View {
-        List(viewModel.items, id: \.title) { item in
-            HStack {
-                Image(item.imageName) // Placeholder image
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: UIScreen.main.bounds.width / 3)
-                    .padding(.trailing, 8)
-                    .onTapGesture {
-                        UIApplication.shared.open(item.url)
+        ScrollView {
+            VStack(spacing: 8) {  // Adjusted spacing between elements
+                ForEach(viewModel.items, id: \.title) { item in
+                    HStack {
+                        Image(item.imageName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: UIScreen.main.bounds.width / 3, height: 80)
+                            .padding(5)
+                            .onTapGesture {
+                                UIApplication.shared.open(item.url)
+                            }
+
+                        VStack(alignment: .leading) {
+                            Text(item.title)
+                                .font(.system(size: 14, design: .rounded))
+                                .lineSpacing(4)
+                                .foregroundColor(.white)
+                                .opacity(0.7)
+                                .onTapGesture {
+                                    UIApplication.shared.open(item.url)
+                                }
+                        }
+
+                        Spacer()
                     }
-
-                VStack(alignment: .leading) {
-                    Text(item.title)
-                        .font(.system(size: 14, design: .rounded))
-                        .foregroundColor(.white)
-                        .opacity(0.7)
+                    .padding(EdgeInsets(top: 5, leading: 3, bottom: 5, trailing: 3))
+                    .background(Color.white.opacity(0.1))
                 }
-
-                Spacer()
             }
-            .padding(10)
-            .background(Color.white.opacity(0.1)) // Faded background for border effect
-            .cornerRadius(10) // Rounded corners for the border
-            .listRowBackground(Color.customBackground) // Set background for each row
         }
-        .listStyle(PlainListStyle()) // Use PlainListStyle for full-width background
-        .background(Color.customBackground.edgesIgnoringSafeArea(.all)) // Set background color
+        .background(Color.customBackground.edgesIgnoringSafeArea(.all))
     }
 }
 

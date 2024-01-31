@@ -17,7 +17,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView {
-            HomeView(viewModel: HomeViewModel())
+            HomeView(viewModel: HomeViewModel(settingsViewModel: settingsViewModel))
                 .environmentObject(settingsViewModel) // Pass SettingsViewModel as environment object
                 .tabItem {
                     Label("Home", systemImage: "house") // 'house' for home icon

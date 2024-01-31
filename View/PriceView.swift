@@ -27,10 +27,10 @@ struct PriceView: View {
         
         if (viewModel.changeInPriceNumber != 0) {
             HStack {
-                Text(viewModel.changeInPriceSignal)
+                Text("asda")
                     .font(.system(size: 15)) // Adjust size as needed
                     .foregroundColor(viewModel.priceColor)
-                Text(viewModel.changeInPrice)
+                Text("asdfa")
                     .font(.system(size: 20, design: .rounded))
                     .minimumScaleFactor(0.1) // Allows the text to shrink
                     .foregroundColor(viewModel.priceColor)
@@ -42,6 +42,6 @@ struct PriceView: View {
 
 struct PriceView_Previews: PreviewProvider {
     static var previews: some View {
-        PriceView(viewModel: HomeViewModel())
+        PriceView(viewModel: HomeViewModel(settingsViewModel: SettingsViewModel()))
     }
 }

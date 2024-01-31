@@ -1,13 +1,14 @@
 import SwiftUI
 import Combine
-
+import UIKit
 
 class HomeViewModel: ObservableObject {
+    private var settingsViewModel: SettingsViewModel
+    
     @Published var todaysDate: String = ""
-
     @Published var bitcoinPrice: String = "0.00"
-    @Published var changeInPrice: String = "0"
-    @Published var changeInPriceSignal: String = "+"
+    @Published var percentChange24h: String = "0.00%"
+    @Published var circulatingSupply: Double = 0
     
     var bitcoinPriceNumber : Int = 0
     var prevBitcoinPriceNumber : Int = 0
@@ -28,7 +29,8 @@ class HomeViewModel: ObservableObject {
     
     var timer: Timer?
     
-    init() {
+    init(settingsViewModel: SettingsViewModel) {
+        self.settingsViewModel = settingsViewModel
         print("Initializing for first time")
         self.lastRefreshTime = Date()
         loadFromUserDefaults()
@@ -59,27 +61,41 @@ class HomeViewModel: ObservableObject {
         getBitcoinPrice(false)
         getBitcoinTransactionFee()
     }
+    
+    func check30MinuteToggle() -> Bool {
+        if settingsViewModel.toggle30Minutes {
+            let timeSinceLastRefresh = Date().timeIntervalSince(lastRefreshTime)
+            let remainingWaitTime = 1800 - timeSinceLastRefresh // 900 seconds = 15 minutes
+            if remainingWaitTime > 0 {
+                let minutes = Int(remainingWaitTime) / 60
+                let seconds = Int(remainingWaitTime) % 60
+                let minuteText = minutes == 1 ? "minute" : "minutes"
+                let secondText = seconds == 1 ? "second" : "seconds"
+                
+                if minutes > 0 {
+                    refreshWaitMessage = "Patience. You need to wait \(minutes) \(minuteText)."
+                } else {
+                    refreshWaitMessage = "Patience. You need to wait \(seconds) \(secondText)."
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    self.refreshWaitMessage = nil
+                }
+                return true
+            }
+        }
+        return false
+    }
 
     func refreshData() {
-        let timeSinceLastRefresh = Date().timeIntervalSince(lastRefreshTime)
-        let remainingWaitTime = 900 - timeSinceLastRefresh // 900 seconds = 15 minutes
-        if remainingWaitTime > 0 {
-            let minutes = Int(remainingWaitTime) / 60
-            let seconds = Int(remainingWaitTime) % 60
-            let minuteText = minutes == 1 ? "minute" : "minutes"
-            let secondText = seconds == 1 ? "second" : "seconds"
-            
-            if minutes > 0 {
-                refreshWaitMessage = "Patience. You need to wait \(minutes) \(minuteText)."
-            } else {
-                refreshWaitMessage = "Patience. You need to wait \(seconds) \(secondText)."
-            }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                self.refreshWaitMessage = nil
-            }
+        if check30MinuteToggle() {
             return
         }
+        
+        // Trigger haptic feedback
+        let feedbackGenerator = UINotificationFeedbackGenerator()
+        feedbackGenerator.prepare()
+        feedbackGenerator.notificationOccurred(.success)
 
         print("Refreshing...")
         getTodaysDate()
@@ -93,48 +109,49 @@ class HomeViewModel: ObservableObject {
         refreshWaitMessage = nil
     }
 
+    private func getAPIKey() -> String? {
+        guard let path = Bundle.main.path(forResource: "Config", ofType: "plist"),
+              let config = NSDictionary(contentsOfFile: path),
+              let apiKey = config["CoinMarketCapAPIKey"] as? String else {
+            return nil
+        }
+        return apiKey
+    }
         
     private func getBitcoinPrice(_ isRefresh: Bool) {
-        let url = URL(string: "https://api.blockchain.com/v3/exchange/tickers/BTC-USD")!
+        guard let apiKey = getAPIKey() else {
+            print("API Key not found")
+            return
+        }
+
+        let url = URL(string: "https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=1")!
         var request = URLRequest(url: url)
+        request.addValue(apiKey, forHTTPHeaderField: "X-CMC_PRO_API_KEY")
         request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("Error: \(error.localizedDescription)")
-                    self.errorMessage = "Error loading price"
+                    self.errorMessage = "Error loading price: \(error.localizedDescription)"
                     return
                 }
                 guard let data = data else {
-                    print("Error: Data is missing")
-                    self.errorMessage = "Error loading price"
+                    self.errorMessage = "Error loading price: Data is missing"
                     return
                 }
 
                 do {
-                    let json = try JSONDecoder().decode(BitcoinAPIResponse.self, from: data)
-                    let newPrice = json.last_trade_price
-                                        
-                    let price24h = json.price_24h
-                    self.prevBitcoinPriceNumber = Int(price24h)
+                    let jsonResponse = try JSONDecoder().decode(CoinMarketCapResponse.self, from: data)
+                    if let bitcoinData = jsonResponse.data["1"] {
+                        let price = bitcoinData.quote.USD.price
+                        let change24h = bitcoinData.quote.USD.percent_change_24h
+                        self.circulatingSupply = bitcoinData.circulating_supply
 
-                    self.bitcoinPrice = String(format: "%.2f", newPrice)
-                    self.bitcoinPriceNumber = Int(newPrice)
-                    
-                    // Update bitcoinPrice with formatted string
-                   let formattedPrice = self.formatAsCurrency(newPrice, true)
-                   self.bitcoinPrice = formattedPrice
-
-                    self.changeInPriceNumber = Double(self.bitcoinPriceNumber) - Double(self.prevBitcoinPriceNumber)
-                    self.changeInPrice = self.formatAsCurrency(abs(self.changeInPriceNumber), false)
-                    self.changeInPriceSignal = self.changeInPriceNumber >= 0 ? "+" : "-"
-                    print("Updating bitcoin change in price: " + self.changeInPriceSignal + String(self.changeInPrice))
-                    
-                    self.errorMessage = nil
+                        self.bitcoinPrice = self.formatAsCurrency(price, true)
+                        self.percentChange24h = String(format: "%.2f%%", change24h)
+                    }
                 } catch {
-                    print("Error: \(error.localizedDescription)")
-                    self.errorMessage = "Error loading price"
+                    self.errorMessage = "Error loading price: \(error.localizedDescription)"
                 }
             }
         }.resume()
@@ -297,7 +314,27 @@ class HomeViewModel: ObservableObject {
     private struct Fee: Decodable {
         let satoshi: Double
     }
+    
+    struct CoinMarketCapResponse: Decodable {
+        let data: [String: Cryptocurrency]
+    }
 
+    struct Cryptocurrency: Decodable {
+        let id: Int
+        let name: String
+        let symbol: String
+        let circulating_supply: Double
+        let quote: Quote
+    }
+
+    struct Quote: Decodable {
+        let USD: USDQuote
+    }
+
+    struct USDQuote: Decodable {
+        let price: Double
+        let percent_change_24h: Double
+    }
 
 }
 
