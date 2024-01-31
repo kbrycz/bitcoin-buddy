@@ -24,6 +24,8 @@ class HomeViewModel: ObservableObject {
     
     @Published var bitcoinTransactionFee: String = "0.00"
     
+    @Published var refreshWaitMessage: String? = nil
+    
     var timer: Timer?
     
     init() {
@@ -59,6 +61,26 @@ class HomeViewModel: ObservableObject {
     }
 
     func refreshData() {
+        let timeSinceLastRefresh = Date().timeIntervalSince(lastRefreshTime)
+        let remainingWaitTime = 900 - timeSinceLastRefresh // 900 seconds = 15 minutes
+        if remainingWaitTime > 0 {
+            let minutes = Int(remainingWaitTime) / 60
+            let seconds = Int(remainingWaitTime) % 60
+            let minuteText = minutes == 1 ? "minute" : "minutes"
+            let secondText = seconds == 1 ? "second" : "seconds"
+            
+            if minutes > 0 {
+                refreshWaitMessage = "Patience. You need to wait \(minutes) \(minuteText)."
+            } else {
+                refreshWaitMessage = "Patience. You need to wait \(seconds) \(secondText)."
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                self.refreshWaitMessage = nil
+            }
+            return
+        }
+
         print("Refreshing...")
         getTodaysDate()
         getBitcoinPrice(true)
@@ -66,12 +88,18 @@ class HomeViewModel: ObservableObject {
         updateLastRefreshTimeAgo()
         getBitcoinTransactionFee()
         self.lastRefreshTime = Date()
+
+        // Reset wait message after successful refresh
+        refreshWaitMessage = nil
     }
+
         
     private func getBitcoinPrice(_ isRefresh: Bool) {
         let url = URL(string: "https://api.blockchain.com/v3/exchange/tickers/BTC-USD")!
-
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
                     print("Error: \(error.localizedDescription)")

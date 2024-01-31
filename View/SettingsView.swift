@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @ObservedObject var viewModel = SettingsViewModel()
+    @EnvironmentObject var viewModel: SettingsViewModel // Use environment object
 
     var body: some View {
         VStack {
@@ -12,19 +12,19 @@ struct SettingsView: View {
                 .opacity(0.7)
 
             VStack(spacing: 20) {
-                Toggle("30 Min Refresh Limit", isOn: $viewModel.toggleOne)
+                Toggle("Last Refresh", isOn: $viewModel.toggleLastRefresh)
                     .toggleStyle(SwitchToggleStyle(tint: .orange))
                     .foregroundColor(.white)
                     .opacity(0.7)
-                Toggle("Price Fading Mode", isOn: $viewModel.toggleTwo)
+                Toggle("Today's Refreshes", isOn: $viewModel.toggleTodayRefreshes)
                     .foregroundColor(.white)
                     .opacity(0.7)
                     .toggleStyle(SwitchToggleStyle(tint: .orange))
-                Toggle("Bitcoin Fee", isOn: $viewModel.toggleTwo)
+                Toggle("All Time Refreshes", isOn: $viewModel.toggleAllTimeRefreshes)
                     .foregroundColor(.white)
                     .opacity(0.7)
                     .toggleStyle(SwitchToggleStyle(tint: .orange))
-                Toggle("Lightning Fee", isOn: $viewModel.toggleTwo)
+                Toggle("Bitcoin Fee", isOn: $viewModel.toggleBitcoinFees)
                     .foregroundColor(.white)
                     .opacity(0.7)
                     .toggleStyle(SwitchToggleStyle(tint: .orange))
@@ -48,5 +48,6 @@ struct SettingsView: View {
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
         SettingsView()
+            .environmentObject(SettingsViewModel()) // Provide SettingsViewModel as an environment object
     }
 }
