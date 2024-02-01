@@ -48,15 +48,47 @@ class SettingsViewModel: ObservableObject {
 
     // Initialize with saved values
     init() {
-        toggleLastRefresh = UserDefaults.standard.bool(forKey: "toggleLastRefresh")
-        toggleMarketCap = UserDefaults.standard.bool(forKey: "toggleMarketCap")
-        toggleCirculatingSupply = UserDefaults.standard.bool(forKey: "toggleCirculatingSupply")
-        toggleBitcoinFees = UserDefaults.standard.bool(forKey: "toggleBitcoinFees")
-        toggleTodayRefreshes = UserDefaults.standard.bool(forKey: "toggleTodayRefreshes")
-        toggleAllTimeRefreshes = UserDefaults.standard.bool(forKey: "toggleAllTimeRefreshes")
+        // Check if the UserDefaults contains a value for each toggle. If not, set them to true by default.
+        if UserDefaults.standard.object(forKey: "toggleLastRefresh") == nil {
+            toggleLastRefresh = true
+        } else {
+            toggleLastRefresh = UserDefaults.standard.bool(forKey: "toggleLastRefresh")
+        }
+        
+        if UserDefaults.standard.object(forKey: "toggleMarketCap") == nil {
+            toggleMarketCap = true
+        } else {
+            toggleMarketCap = UserDefaults.standard.bool(forKey: "toggleMarketCap")
+        }
+        
+        if UserDefaults.standard.object(forKey: "toggleCirculatingSupply") == nil {
+            toggleCirculatingSupply = true
+        } else {
+            toggleCirculatingSupply = UserDefaults.standard.bool(forKey: "toggleCirculatingSupply")
+        }
+        
+        if UserDefaults.standard.object(forKey: "toggleBitcoinFees") == nil {
+            toggleBitcoinFees = true
+        } else {
+            toggleBitcoinFees = UserDefaults.standard.bool(forKey: "toggleBitcoinFees")
+        }
+        
+        if UserDefaults.standard.object(forKey: "toggleTodayRefreshes") == nil {
+            toggleTodayRefreshes = true
+        } else {
+            toggleTodayRefreshes = UserDefaults.standard.bool(forKey: "toggleTodayRefreshes")
+        }
+        
+        if UserDefaults.standard.object(forKey: "toggleAllTimeRefreshes") == nil {
+            toggleAllTimeRefreshes = true
+        } else {
+            toggleAllTimeRefreshes = UserDefaults.standard.bool(forKey: "toggleAllTimeRefreshes")
+        }
+        
+        // For toggle30Minutes, keep its current behavior, which respects the user's previous choice or defaults to false.
         toggle30Minutes = UserDefaults.standard.bool(forKey: "toggle30Minutes")
-
     }
+
 
 }
 

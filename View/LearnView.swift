@@ -12,46 +12,54 @@ struct LearnView: View {
                     .padding(.top, 40)
                     .opacity(0.7)
                 
-                Text("Check out some of the best resources on macro economics and bitcoin!")
-                    .font(.system(size: 14, design: .rounded))
+                Spacer()
+                Spacer()
+                VStack {
+                    ForEach(viewModel.items, id: \.title) { item in
+                        HStack {
+                            Image(item.imageName)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: UIScreen.main.bounds.width / 3, height: 80)
+                                .padding(5)
+                                .onTapGesture {
+                                    UIApplication.shared.open(item.url)
+                                }
+
+                            VStack(alignment: .leading) {
+                                Text(item.title)
+                                    .font(.system(size: 14, design: .rounded))
+                                    .lineSpacing(4)
+                                    .foregroundColor(.white)
+                                    .opacity(0.7)
+                                    .onTapGesture {
+                                        UIApplication.shared.open(item.url)
+                                    }
+                            }
+
+                            Spacer()
+                        }
+                        .padding(EdgeInsets(top: 10, leading: 10, bottom: 5, trailing: 10))
+                        .background(Color.white.opacity(0.1))
+                        .cornerRadius(10)
+
+                    }
+                }
+                .padding(EdgeInsets(top: 0, leading: 15, bottom: 0, trailing: 15))
+
+
+                
+                Spacer()
+                
+                Text("This some of the best bitcoin and macro economics material! Not financial advice! Do your own research!")
+                    .font(.system(size: 13, design: .rounded))
                     .foregroundColor(.white)
+                    .lineSpacing(4)
                     .opacity(0.5)
                     .padding(EdgeInsets(top: 10, leading: 20, bottom: 5, trailing: 20))
                 
                 Spacer()
-                
-                ForEach(viewModel.items, id: \.title) { item in
-                    HStack {
-                        Image(item.imageName)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: UIScreen.main.bounds.width / 3, height: 80)
-                            .padding(5)
-                            .onTapGesture {
-                                UIApplication.shared.open(item.url)
-                            }
-
-                        VStack(alignment: .leading) {
-                            Text(item.title)
-                                .font(.system(size: 14, design: .rounded))
-                                .lineSpacing(4)
-                                .foregroundColor(.white)
-                                .opacity(0.7)
-                                .onTapGesture {
-                                    UIApplication.shared.open(item.url)
-                                }
-                        }
-
-                        Spacer()
-                    }
-                    .padding(EdgeInsets(top: 10, leading: 10, bottom: 5, trailing: 10))
-                    .background(Color.white.opacity(0.1))
-                }
-                Text("This is not financial advice! Do your own research!")
-                    .font(.system(size: 12, design: .rounded))
-                    .foregroundColor(.white)
-                    .opacity(0.5)
-                    .padding(EdgeInsets(top: 10, leading: 20, bottom: 5, trailing: 20))
+                Spacer()
             }
         }
         .background(Color.customBackground.edgesIgnoringSafeArea(.all))

@@ -51,7 +51,13 @@ struct SettingsView: View {
             Text("Version 1.0.0")
                 .font(.caption)
                 .foregroundColor(.gray)
+                .padding(.bottom, 5)
+            
+            Text("Thank you to CoinMarketCap for price data")
+                .font(.caption)
+                .foregroundColor(.gray)
                 .padding(.bottom, 20)
+                .opacity(0.5)
         }
         .background(Color.customBackground.edgesIgnoringSafeArea(.all)) // Set background color
     }

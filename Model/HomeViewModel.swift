@@ -159,11 +159,18 @@ class HomeViewModel: ObservableObject {
                         let marketCap = bitcoinData.quote.USD.market_cap
                                                 
                         self.bitcoinPriceNumber = price
+                        self.percentChange24hValue = change24h
+                        
+                        // Check if the value is positive and prepend a "+" sign if true
+                        if change24h > 0 {
+                            self.percentChange24h = String(format: "+%.2f%%", change24h)
+                        } else {
+                            self.percentChange24h = String(format: "%.2f%%", change24h)
+                        }
+                        
                         self.circulatingSupply = self.formatNumberWithCommas(bitcoinData.circulating_supply)
                         self.bitcoinPrice = self.formatAsCurrency(price, true)
-                        self.percentChange24hValue = change24h
-                        self.percentChange24h = String(format: "%.2f%%", change24h)
-                        self.marketCap = self.formatAsCurrency(marketCap, false)
+                        self.marketCap = self.formatMarketCap(marketCap)
                         
                         print("Successfully got bitcoin price: " + self.bitcoinPrice)
                         print("Successfully got bitcoin percent change: " + self.percentChange24h)
@@ -210,21 +217,21 @@ class HomeViewModel: ObservableObject {
 
     private func loadFromUserDefaults() {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd" // Use a format that includes only the date
-
-        let currentDate = formatter.string(from: Date())
-        todaysDate = currentDate
-
-        // Load the date of the last refresh
-        if let lastRefreshDate = UserDefaults.standard.string(forKey: UserDefaultsKeys.lastRefreshDate),
-           let lastRefresh = formatter.date(from: lastRefreshDate) {
-            
-            // Check if last refresh was today
-            if !Calendar.current.isDateInToday(lastRefresh) {
-                // If not today, reset the counter
-                totalRefreshesToday = "0"
-                UserDefaults.standard.set("0", forKey: UserDefaultsKeys.totalRefreshesToday)
-            }
+        formatter.dateFormat = "yyyy-MM-dd"
+        
+        // Check if today's date is already saved, indicating app was opened earlier today
+        if let savedDate = UserDefaults.standard.string(forKey: UserDefaultsKeys.lastRefreshDate),
+           let lastRefreshDate = formatter.date(from: savedDate),
+           Calendar.current.isDateInToday(lastRefreshDate) {
+            // It's the same day, load today's refresh count
+            totalRefreshesToday = UserDefaults.standard.string(forKey: UserDefaultsKeys.totalRefreshesToday) ?? "0"
+        } else {
+            // It's a new day or first launch, reset today's refresh count
+            totalRefreshesToday = "0"
+            UserDefaults.standard.set("0", forKey: UserDefaultsKeys.totalRefreshesToday)
+            // Save today's date as the last refresh date
+            let today = Date()
+            UserDefaults.standard.set(formatter.string(from: today), forKey: UserDefaultsKeys.lastRefreshDate)
         }
 
         // Load total refreshes all time
@@ -318,6 +325,30 @@ class HomeViewModel: ObservableObject {
         numberFormatter.numberStyle = .decimal // Use decimal style for adding commas
         numberFormatter.groupingSeparator = "," // Ensure the comma is used as the grouping separator
         return numberFormatter.string(from: NSNumber(value: number)) ?? "\(number)"
+    }
+    
+    private func formatMarketCap(_ value: Double) -> String {
+        let numberFormatter = NumberFormatter()
+        numberFormatter.numberStyle = .decimal
+        numberFormatter.locale = Locale(identifier: "en_US")
+        numberFormatter.maximumFractionDigits = 1 // Maximum one decimal place
+        numberFormatter.minimumFractionDigits = 1 // Ensure at least one decimal place
+
+        let currencySymbol = "$"
+        
+        let billion = 1_000_000_000.0
+        let trillion = 1_000_000_000_000.0
+        
+        if value >= trillion {
+            let formattedValue = value / trillion
+            return "\(currencySymbol)\(numberFormatter.string(from: NSNumber(value: formattedValue)) ?? "")T"
+        } else if value >= billion {
+            let formattedValue = value / billion
+            return "\(currencySymbol)\(numberFormatter.string(from: NSNumber(value: formattedValue)) ?? "")B"
+        } else {
+            // For values less than a billion, the formatter is already set to include at least one decimal
+            return "\(currencySymbol)\(numberFormatter.string(from: NSNumber(value: value)) ?? "")"
+        }
     }
 
     
