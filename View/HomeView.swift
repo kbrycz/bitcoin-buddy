@@ -30,10 +30,7 @@ struct HomeView: View {
         )
         .background(Color.customBackground.edgesIgnoringSafeArea(.all)) // Set background color
         .refreshable {
-            viewModel.refreshData()
-        }
-        .onAppear {
-            viewModel.loadEverything()
+            viewModel.refreshData(false)
         }
     }
 }

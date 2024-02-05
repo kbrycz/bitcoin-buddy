@@ -31,11 +31,9 @@ class HomeViewModel: ObservableObject {
     
     init(settingsViewModel: SettingsViewModel) {
         self.settingsViewModel = settingsViewModel
-        print("Initializing for first time")
-        self.lastRefreshTime = Date()
-        loadFromUserDefaults()
-        updateLastRefreshTimeAgo()
-        startTimer()
+        self.loadFromUserDefaults()
+        self.startTimer()
+        self.refreshData(true)
     }
     
     // Make sure to invalidate the timer when it is no longer needed
@@ -54,14 +52,6 @@ class HomeViewModel: ObservableObject {
             return Color.white
         }
         return percentChange24hValue > 0 ? Color.green : Color.red
-    }
-    
-    func loadEverything() {
-        getTodaysDate()
-        // Call getBitcoinPrice and then getBitcoinTransactionFee sequentially
-        getBitcoinPrice(true) { [weak self] in
-            self?.getBitcoinTransactionFee()
-        }
     }
     
     func check30MinuteToggle() -> Bool {
@@ -89,14 +79,27 @@ class HomeViewModel: ObservableObject {
         return false
     }
 
-    func refreshData() {
-        if check30MinuteToggle() {
+    func refreshData(_ override : Bool) {
+        // Check if it's allowed to refresh based on the 30-minute toggle
+        if check30MinuteToggle() && !override {
+            // If not allowed, exit the function early
             return
         }
+        
+        // Get the current date in "YYYY-MM-DD" format
+        let currentDate = currentDateString()
 
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd" // Same format as used in loadFromUserDefaults
-        let currentDate = formatter.string(from: Date())
+        // Check if it's a new day
+        if currentDate != UserDefaults.standard.string(forKey: UserDefaultsKeys.lastRefreshDate) {
+            // It's a new day, so reset today's refresh count and update the last refresh date
+            totalRefreshesToday = "0"
+            UserDefaults.standard.set(currentDate, forKey: UserDefaultsKeys.lastRefreshDate)
+        }
+
+        // Proceed with the refreshing logic
+        self.lastRefreshTime = Date() // Update the last refresh time
+        updateLastRefreshTimeAgo() // Update the time ago based on the new last refresh time
+        UserDefaults.standard.set(self.lastRefreshTime, forKey: UserDefaultsKeys.lastRefreshTime)
 
         UserDefaults.standard.set(currentDate, forKey: UserDefaultsKeys.lastRefreshDate)
         UserDefaults.standard.synchronize()
@@ -113,11 +116,12 @@ class HomeViewModel: ObservableObject {
             self?.getBitcoinTransactionFee()
         }
         incrementRefreshCount()
-        updateLastRefreshTimeAgo()
-        self.lastRefreshTime = Date()
 
         // Reset wait message after successful refresh
         refreshWaitMessage = nil
+        
+        UserDefaults.standard.set(totalRefreshesToday, forKey: UserDefaultsKeys.totalRefreshesToday)
+        UserDefaults.standard.synchronize()
     }
 
     private func getAPIKey() -> String? {
@@ -214,51 +218,51 @@ class HomeViewModel: ObservableObject {
             }
         }.resume()
     }
+    
 
     private func loadFromUserDefaults() {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        
-        // Check if today's date is already saved, indicating app was opened earlier today
-        if let savedDate = UserDefaults.standard.string(forKey: UserDefaultsKeys.lastRefreshDate),
-           let lastRefreshDate = formatter.date(from: savedDate),
-           Calendar.current.isDateInToday(lastRefreshDate) {
-            // It's the same day, load today's refresh count
+        // Check if it's still today compared to the last saved refresh date
+        let savedDate = UserDefaults.standard.string(forKey: UserDefaultsKeys.lastRefreshDate) ?? ""
+        let today = currentDateString()
+
+        if savedDate == today {
+            // Load today's refresh count if it's still the same day
             totalRefreshesToday = UserDefaults.standard.string(forKey: UserDefaultsKeys.totalRefreshesToday) ?? "0"
         } else {
-            // It's a new day or first launch, reset today's refresh count
+            // It's a new day, reset today's refresh count
             totalRefreshesToday = "0"
-            UserDefaults.standard.set("0", forKey: UserDefaultsKeys.totalRefreshesToday)
-            // Save today's date as the last refresh date
-            let today = Date()
-            UserDefaults.standard.set(formatter.string(from: today), forKey: UserDefaultsKeys.lastRefreshDate)
+            UserDefaults.standard.set(today, forKey: UserDefaultsKeys.lastRefreshDate)
         }
 
-        // Load total refreshes all time
-        if let totalAllTime = UserDefaults.standard.string(forKey: UserDefaultsKeys.totalRefreshesAllTime) {
-            totalRefreshesAllTime = totalAllTime
-        }
-
-        // Load last refresh time
-        if let lastRefreshString = UserDefaults.standard.string(forKey: UserDefaultsKeys.lastRefreshTime),
-           let lastTime = DateFormatter().date(from: lastRefreshString) {
-            lastRefreshTime = lastTime
-        } else {
-            lastRefreshTime = Date()
-        }
+        totalRefreshesAllTime = UserDefaults.standard.string(forKey: UserDefaultsKeys.totalRefreshesAllTime) ?? "0"
+        
+        // Update lastRefreshTime from UserDefaults or set to now if not available
+        let lastRefreshTimestamp = UserDefaults.standard.object(forKey: UserDefaultsKeys.lastRefreshTime) as? Date ?? Date()
+        lastRefreshTime = lastRefreshTimestamp
+        
+        updateLastRefreshTimeAgo() // Ensure this method is called to update the time ago display
     }
     
-    private func incrementRefreshCount() {
-        // Increment today's refresh count
+    private func currentDateString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
+    }
+
+    func incrementRefreshCount() {
+        // Ensure this method updates UserDefaults with the current refresh time
+        UserDefaults.standard.set(Date(), forKey: UserDefaultsKeys.lastRefreshTime)
+        
+        // Increment today's and all-time counts, then save
         let todayCount = (Int(totalRefreshesToday) ?? 0) + 1
         totalRefreshesToday = "\(todayCount)"
         UserDefaults.standard.set(totalRefreshesToday, forKey: UserDefaultsKeys.totalRefreshesToday)
-
-        // Increment all-time refresh count
+        
         let allTimeCount = (Int(totalRefreshesAllTime.replacingOccurrences(of: ",", with: "")) ?? 0) + 1
         totalRefreshesAllTime = formattedCount(allTimeCount)
         UserDefaults.standard.set(totalRefreshesAllTime, forKey: UserDefaultsKeys.totalRefreshesAllTime)
     }
+
 
     private func formattedCount(_ count: Int) -> String {
         let numberFormatter = NumberFormatter()
